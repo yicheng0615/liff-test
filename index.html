@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LIFF Test</title>
+</head>
+<body>
+  <h2>LINE userId 取得測試</h2>
+  <div id="msg">載入中...</div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    async function main() {
+      await liff.init({ liffId: "你的LIFF_ID" });
+
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      const data = liff.getDecodedIDToken();
+
+      document.getElementById("msg").innerHTML =
+        "你的 LINE userId 是：<br><b>" + data.sub + "</b>";
+    }
+
+    main();
+  </script>
+</body>
+</html>
