@@ -6,12 +6,17 @@
 </head>
 <body>
   <h2>LINE userId 取得測試</h2>
+
   <div id="msg">載入中...</div>
+
+  <button id="copyBtn" style="display:none;">複製 userId</button>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
+    let userId = "";
+
     async function main() {
-      await liff.init({ liffId: "2009600757-9xQUxXNI" });
+      await liff.init({ liffId: "你的LIFF_ID" });
 
       if (!liff.isLoggedIn()) {
         liff.login();
@@ -19,10 +24,21 @@
       }
 
       const data = liff.getDecodedIDToken();
+      userId = data.sub;
 
       document.getElementById("msg").innerHTML =
-        "你的 LINE userId 是：<br><b>" + data.sub + "</b>";
+        "你的 LINE userId 是：<br><b>" + userId + "</b>";
+
+      document.getElementById("copyBtn").style.display = "inline";
     }
+
+    document.getElementById("copyBtn").addEventListener("click", function () {
+      navigator.clipboard.writeText(userId).then(() => {
+        alert("已複製！");
+      }).catch(() => {
+        alert("複製失敗");
+      });
+    });
 
     main();
   </script>
