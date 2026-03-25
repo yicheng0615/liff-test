@@ -1,44 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LIFF Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .box {
+      margin-top: 12px;
+    }
+    input[type="text"] {
+      width: 100%;
+      max-width: 420px;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 12px;
+      color: #333;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
 </head>
 <body>
   <h2>LINE userId 取得測試</h2>
 
-  <div id="msg">載入中...</div>
+  <div class="box">
+    <div>你的 LINE userId：</div>
+    <input id="userIdInput" type="text" value="載入中..." readonly />
+  </div>
 
-  <button id="copyBtn" style="display:none;">複製 userId</button>
+  <div class="box">
+    <button id="copyBtn" type="button">複製 userId</button>
+  </div>
+
+  <div id="status">初始化中...</div>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     let userId = "";
 
     async function main() {
-      await liff.init({ liffId: "2009600757-9xQUxXNI" });
+      const status = document.getElementById("status");
+      const input = document.getElementById("userIdInput");
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
+      try {
+        await liff.init({ liffId: "你的真正LIFF_ID" });
+
+        if (!liff.isLoggedIn()) {
+          status.textContent = "尚未登入，正在跳轉登入...";
+          liff.login();
+          return;
+        }
+
+        const decoded = liff.getDecodedIDToken();
+
+        if (!decoded || !decoded.sub) {
+          throw new Error("取不到 userId");
+        }
+
+        userId = decoded.sub;
+        input.value = userId;
+        status.textContent = "載入成功，可直接按複製；若失敗也可長按文字框手動複製。";
+      } catch (err) {
+        input.value = "";
+        status.textContent = "發生錯誤：\n" + (err && err.message ? err.message : String(err));
+      }
+    }
+
+    async function copyUserId() {
+      const input = document.getElementById("userIdInput");
+      const status = document.getElementById("status");
+
+      if (!input.value || input.value === "載入中...") {
+        status.textContent = "目前沒有可複製的 userId。";
         return;
       }
 
-      const data = liff.getDecodedIDToken();
-      userId = data.sub;
+      input.focus();
+      input.select();
+      input.setSelectionRange(0, input.value.length);
 
-      document.getElementById("msg").innerHTML =
-        "你的 LINE userId 是：<br><b>" + userId + "</b>";
-
-      document.getElementById("copyBtn").style.display = "inline";
+      try {
+        // 新式 Clipboard API
+        await navigator.clipboard.writeText(input.value);
+        status.textContent = "已複製到剪貼簿。";
+      } catch (e) {
+        try {
+          // 舊式備援
+          const ok = document.execCommand("copy");
+          status.textContent = ok
+            ? "已複製到剪貼簿。"
+            : "自動複製失敗，請長按上方文字框手動複製。";
+        } catch (e2) {
+          status.textContent = "自動複製失敗，請長按上方文字框手動複製。";
+        }
+      }
     }
 
-    document.getElementById("copyBtn").addEventListener("click", function () {
-      navigator.clipboard.writeText(userId).then(() => {
-        alert("已複製！");
-      }).catch(() => {
-        alert("複製失敗");
-      });
-    });
+    document.getElementById("copyBtn").addEventListener("click", copyUserId);
 
     main();
   </script>
